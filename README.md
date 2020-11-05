@@ -25,3 +25,7 @@ This command line tool will return the following information for you container:
     ```
     > ./cosmosutility -e [cosmos db account endpoint] -k [cosmos db account key] -d [database name] -c [container name]
     ```
+  - Retrieve metrics for a collection and output to txt file:
+    ```
+    > ./cosmosutility -e [cosmos db account endpoint] -k [cosmos db account key] -d [database name] -c [container name] > output.txt
+    ```
