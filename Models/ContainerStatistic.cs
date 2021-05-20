@@ -5,8 +5,8 @@ namespace CosmosUtility.Models
     public class ContainerStatistic
     {
         public string Id { get; set; }
-        public int SizeInKB { get; set; }
-        public int DocumentCount { get; set; }
+        public long SizeInKB { get; set; }
+        public long DocumentCount { get; set; }
         public List<PartitionKeyStatistic> PartitionKeys { get; set; }
     }
 }

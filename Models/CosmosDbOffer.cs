@@ -3,16 +3,16 @@ using System.Collections.Generic;
 
 namespace CosmosUtility.Models
 {
-    public class PartitionKeyRange
+    public class CosmosDbOffer
     {
         [JsonProperty(PropertyName = "_rid")]
         public string Rid { get; set; }
 
         [JsonProperty(PropertyName = "_count")]
-        public long Count { get; set; }
+        public string Count { get; set; }
 
-        public List<PartitionKeyRangeDetail> PartitionKeyRanges { get; set; }
+        public List<ContainerOffer> Offers { get; set; }
 
-        public List<string> Raw { get; set; }
+        public string Raw { get; set; }
     }
 }

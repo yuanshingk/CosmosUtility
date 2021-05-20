@@ -21,7 +21,9 @@ namespace CosmosUtility
                        {
                            var metadata = await GetContainerMetadata(o.Endpoint, o.AccountKey, o.Database, o.Container);
                            metadata ??= new ContainerMetadata();
+                           metadata.CosmosDbOffer = await GetOffers(o.Endpoint, o.AccountKey, null);
                            metadata.PartitionKeyRange = await GetPartitionKeyRange(o.Endpoint, o.AccountKey, o.Database, o.Container);
+
                            var outputText = JsonConvert.SerializeObject(metadata, Formatting.Indented);
                            Console.WriteLine(outputText);
 
@@ -61,6 +63,7 @@ namespace CosmosUtility
                 {
                     var contents = await response.Content.ReadAsStringAsync();
                     var metadata = JsonConvert.DeserializeObject<ContainerMetadata>(contents);
+                    metadata.Raw = contents;
                     if (response.Headers.TryGetValues("x-ms-request-charge", out IEnumerable<string> requestCharges) && requestCharges.Any())
                     {
                         metadata.RequestCharge = Double.Parse(requestCharges.First());
@@ -117,6 +120,9 @@ namespace CosmosUtility
 
                         var contents = await response.Content.ReadAsStringAsync();
                         var pkrange = JsonConvert.DeserializeObject<PartitionKeyRange>(contents);
+                        var raw = new List<string>();
+                        raw.Add(contents);
+                        pkrange.Raw = raw;
                         partitionKeyRanges.Add(pkrange);
                     }
                     else
@@ -131,8 +137,33 @@ namespace CosmosUtility
             {
                 Count = partitionKeyRanges.Select(pkr => pkr.Count).Sum(),
                 Rid = partitionKeyRanges.First().Rid,
-                PartitionKeyRanges = partitionKeyRanges.SelectMany(pkr => pkr.PartitionKeyRanges).ToList()
+                PartitionKeyRanges = partitionKeyRanges.SelectMany(pkr => pkr.PartitionKeyRanges).ToList(),
+                Raw = partitionKeyRanges.SelectMany(pkr => pkr.Raw).ToList()
             };
+        }
+
+        private static async Task<CosmosDbOffer> GetOffers(string cosmosDbEndpoint, string cosmosDbAccountKey, string selfLink)
+        {
+            var date = DateTime.Now.ToUniversalTime().ToString("ddd, dd MMM yyyy HH:mm:ss");
+            var token = Helper.GenerateAuthToken("GET", "offers", null, date.ToLower(), cosmosDbAccountKey, "master", "1.0");
+            var url = $"{cosmosDbEndpoint}/offers";
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Add("Authorization", token);
+                httpClient.DefaultRequestHeaders.Add("x-ms-date", date);
+                httpClient.DefaultRequestHeaders.Add("x-ms-version", "2018-12-31");
+
+                var response = await httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var contents = await response.Content.ReadAsStringAsync();
+                    var offers = JsonConvert.DeserializeObject<CosmosDbOffer>(contents);
+                    offers.Raw = contents;
+                    return offers;
+                }
+            }
+
+            return null;
         }
     }
 }
